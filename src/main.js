@@ -17,7 +17,7 @@ const sizes = {
 
 //Physics
 const GRAVITY = 30;
-const CAPSURE_RADIUS = 0.35;
+const CAPSULE_RADIUS = 0.35;
 const CAPSULE_HEIGHT = 1;
 const JUMP_HEIGHT = 10;
 const MOVE_SPEED = 5;
@@ -31,9 +31,9 @@ let targetRotation = Math.PI / 2;
 
 const colliderOctree = new Octree();
 const playerCollider = new Capsule(
-  new THREE.Vector3(0, CAPSURE_RADIUS, 0),
+  new THREE.Vector3(0, CAPSULE_RADIUS, 0),
   new THREE.Vector3(0, CAPSULE_HEIGHT, 0),
-  CAPSURE_RADIUS,
+  CAPSULE_RADIUS,
 );
 
 let playerVelocity = new THREE.Vector3();
@@ -65,6 +65,7 @@ const modalContent = {
   },
 };
 
+//Modal
 const modal = document.querySelector(".modal");
 const modalTitle = document.querySelector(".modal-title");
 const modalProjectDescription = document.querySelector(
@@ -123,7 +124,7 @@ loader.load(
         character.instance = child;
         playerCollider.start
           .copy(child.position)
-          .add(new THREE.Vector3(0, CAPSURE_RADIUS, 0));
+          .add(new THREE.Vector3(0, CAPSULE_RADIUS, 0));
         playerCollider.end
           .copy(child.position)
           .add(new THREE.Vector3(0, CAPSULE_HEIGHT, 0));
@@ -240,7 +241,6 @@ function playerCollisions() {
       playerVelocity.x = 0;
       playerVelocity.z = 0;
     }
-    playerCollider.translate(result.normal.multiplyScalar(result.depth));
   }
 }
 
@@ -248,7 +248,7 @@ function respawnPlayer() {
   character.instance.position.copy(character.spawnPoint);
   playerCollider.start
     .copy(character.spawnPoint)
-    .add(new THREE.Vector3(0, CAPSURE_RADIUS, 0));
+    .add(new THREE.Vector3(0, CAPSULE_RADIUS, 0));
   playerCollider.end
     .copy(character.spawnPoint)
     .add(new THREE.Vector3(0, CAPSULE_HEIGHT, 0));
@@ -259,7 +259,7 @@ function respawnPlayer() {
 function updatePlayer() {
   if (!character.instance) return;
 
-  if (character.position.y < -20) {
+  if (character.instance.position.y < -20) {
     respawnPlayer();
     return;
   }
@@ -269,7 +269,7 @@ function updatePlayer() {
   playerCollider.translate(playerVelocity.clone().multiplyScalar(0.035));
   playerCollisions();
   character.instance.position.copy(playerCollider.start);
-  character.instance.position.y -= CAPSURE_RADIUS;
+  character.instance.position.y -= CAPSULE_RADIUS;
 
   let rotationDiff =
     ((((targetRotation - character.instance.rotation.y) % (2 * Math.PI)) +
