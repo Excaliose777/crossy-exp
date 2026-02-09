@@ -15,6 +15,10 @@ const sizes = {
   height: window.innerHeight,
 };
 
+const themeToggleButton = document.querySelector(".theme-mode-toggle-button");
+const firstIcon = document.querySelector(".first-icon");
+const secondIcon = document.querySelector(".second-icon");
+
 //Physics
 const GRAVITY = 30;
 const CAPSULE_RADIUS = 0.35;
@@ -105,6 +109,42 @@ const intersectObjectsNames = [
   "Character_3",
 ];
 
+// INFO MODAL
+const infoButton = document.querySelector(".info-button");
+const infoModal = document.querySelector(".info-modal");
+const infoModalExit = document.querySelector(".info-modal-exit-button");
+const infoModalDescription = document.querySelector(
+  ".info-modal-project-description",
+);
+function openInfoModal() {
+  infoModal.classList.remove("hidden");
+
+  document.body.style.overflow = "hidden"; // prevent scroll
+}
+
+function closeInfoModal() {
+  infoModal.classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+infoModalExit.addEventListener("click", closeInfoModal);
+infoButton.addEventListener("click", openInfoModal);
+
+// CLICK OUTSIDE TO CLOSE
+infoModal.addEventListener("click", (e) => {
+  if (e.target === infoModal) {
+    closeInfoModal();
+  }
+});
+
+// ESC KEY
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !infoModal.classList.contains("hidden")) {
+    closeInfoModal();
+  }
+});
+
+// OBJECT LOAD
 const loader = new GLTFLoader();
 loader.load(
   "/Portfolio4.glb",
@@ -155,14 +195,9 @@ sun.shadow.camera.bottom = -200;
 sun.shadow.normalBias = 1;
 scene.add(sun);
 
-// const shadowHelper = new THREE.CameraHelper(sun.shadow.camera);
-// scene.add(shadowHelper);
-
-// const helper = new THREE.DirectionalLightHelper(sun, 5);
-// scene.add(helper);
-
 const light = new THREE.AmbientLight(0xffffff, 1);
 scene.add(light);
+scene.background = new THREE.Color(0x9fdf49);
 
 // const camera = new THREE.PerspectiveCamera(
 //   75,
@@ -228,7 +263,7 @@ function onPointerMove(e) {
 }
 
 function onClick() {
-  console.log(intersectedObject);
+  // console.log(intersectedObject);
   if (intersectedObject !== "") {
     openModal(intersectedObject);
   }
@@ -261,6 +296,8 @@ function respawnPlayer() {
 }
 
 function updatePlayer() {
+  if (!infoModal.classList.contains("hidden")) return;
+
   if (!character.instance) return;
 
   if (character.instance.position.y < -20) {
@@ -331,15 +368,134 @@ function onKeyDown(e) {
   character.isMoving = true;
 }
 
+//THEME
+function toggleTheme() {
+  const isDarkTheme = document.body.classList.contains("dark-theme");
+  document.body.classList.toggle("dark-theme");
+  document.body.classList.toggle("light-theme");
+
+  if (firstIcon.style.display === "none") {
+    firstIcon.style.display = "block";
+    secondIcon.style.display = "none";
+  } else {
+    firstIcon.style.display = "none";
+    secondIcon.style.display = "block";
+  }
+
+  gsap.to(light.color, {
+    r: isDarkTheme ? 1.0 : 0.25,
+    g: isDarkTheme ? 1.0 : 0.31,
+    b: isDarkTheme ? 1.0 : 0.78,
+    duration: 1,
+    ease: "power2.inOut",
+  });
+
+  gsap.to(light, {
+    intensity: isDarkTheme ? 0.8 : 0.9,
+    duration: 1,
+    ease: "power2.inOut",
+  });
+
+  gsap.to(sun, {
+    intensity: isDarkTheme ? 1 : 0.8,
+    duration: 1,
+    ease: "power2.inOut",
+  });
+
+  gsap.to(sun.color, {
+    r: isDarkTheme ? 1.0 : 0.25,
+    g: isDarkTheme ? 1.0 : 0.41,
+    b: isDarkTheme ? 1.0 : 0.88,
+    duration: 1,
+    ease: "power2.inOut",
+  });
+}
+
+themeToggleButton.addEventListener("click", toggleTheme);
 modalExitButton.addEventListener("click", closeModal);
 window.addEventListener("resize", onResize);
 window.addEventListener("click", onClick);
 window.addEventListener("pointermove", onPointerMove);
 window.addEventListener("keydown", onKeyDown);
 
-function animate() {
-  updatePlayer();
+// Mobile controls
+const mobileControls = {
+  up: document.querySelector(".mobile-control.up-arrow"),
+  left: document.querySelector(".mobile-control.left-arrow"),
+  right: document.querySelector(".mobile-control.right-arrow"),
+  down: document.querySelector(".mobile-control.down-arrow"),
+};
 
+const pressedButtons = {
+  up: false,
+  down: false,
+  left: false,
+  right: false,
+};
+
+Object.entries(mobileControls).forEach(([direction, element]) => {
+  if (!element) return;
+
+  const press = (e) => {
+    e.preventDefault();
+    pressedButtons[direction] = true;
+  };
+
+  const release = (e) => {
+    e.preventDefault();
+    pressedButtons[direction] = false;
+  };
+
+  element.addEventListener("touchstart", press, { passive: false });
+  element.addEventListener("touchend", release);
+  element.addEventListener("touchcancel", release);
+
+  element.addEventListener("mousedown", press);
+  element.addEventListener("mouseup", release);
+  element.addEventListener("mouseleave", release);
+});
+
+function applyMobileInput() {
+  if (!infoModal.classList.contains("hidden")) return;
+
+  if (!character.instance) return;
+  if (character.isMoving) return;
+
+  let moved = false;
+
+  if (pressedButtons.up) {
+    playerVelocity.z = -MOVE_SPEED;
+    targetRotation = 0;
+    moved = true;
+  }
+
+  if (pressedButtons.down) {
+    playerVelocity.z = MOVE_SPEED;
+    targetRotation = Math.PI;
+    moved = true;
+  }
+
+  if (pressedButtons.left) {
+    playerVelocity.x = -MOVE_SPEED;
+    targetRotation = -Math.PI / 2;
+    moved = true;
+  }
+
+  if (pressedButtons.right) {
+    playerVelocity.x = MOVE_SPEED;
+    targetRotation = Math.PI / 2;
+    moved = true;
+  }
+
+  if (moved) {
+    playerVelocity.y = JUMP_HEIGHT;
+    character.isMoving = true;
+  }
+}
+
+function animate() {
+  applyMobileInput();
+  updatePlayer();
   if (character.instance) {
     const targetCameraPosition = new THREE.Vector3(
       character.instance.position.x + cameraOffset.x,
