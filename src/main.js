@@ -20,14 +20,14 @@ const GRAVITY = 30;
 const CAPSULE_RADIUS = 0.35;
 const CAPSULE_HEIGHT = 1;
 const JUMP_HEIGHT = 10;
-const MOVE_SPEED = 5;
+const MOVE_SPEED = 8;
 
 let character = {
   instance: null,
   isMoving: false,
   spawnPoint: new THREE.Vector3(),
 };
-let targetRotation = Math.PI / 2;
+let targetRotation = -Math.PI / 2;
 
 const colliderOctree = new Octree();
 const playerCollider = new Capsule(
@@ -132,6 +132,7 @@ loader.load(
 
       if (child.name === "Ground_Collider") {
         colliderOctree.fromGraphNode(child);
+        child.visible = false;
       }
     });
   },
@@ -154,11 +155,11 @@ sun.shadow.camera.bottom = -200;
 sun.shadow.normalBias = 1;
 scene.add(sun);
 
-const shadowHelper = new THREE.CameraHelper(sun.shadow.camera);
-scene.add(shadowHelper);
+// const shadowHelper = new THREE.CameraHelper(sun.shadow.camera);
+// scene.add(shadowHelper);
 
-const helper = new THREE.DirectionalLightHelper(sun, 5);
-scene.add(helper);
+// const helper = new THREE.DirectionalLightHelper(sun, 5);
+// scene.add(helper);
 
 const light = new THREE.AmbientLight(0xffffff, 1);
 scene.add(light);
@@ -180,11 +181,6 @@ const camera = new THREE.OrthographicCamera(
   1000,
 );
 
-// const geometry = new THREE.BoxGeometry();
-// const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-// const cube = new THREE.Mesh(geometry, material);
-// scene.add(cube);
-
 // camera.position.z = 146.5726619438359;
 // camera.position.y = 34.95760660669216;
 // camera.position.x = 144.27933809714523;
@@ -199,11 +195,19 @@ camera.position.x = 128.93910304616537;
 camera.position.y = 86.4682792679389;
 camera.position.z = 165.4058143507201;
 
-const controls = new OrbitControls(camera, canvas);
-controls.update();
-controls.enableDamping = true; // smooth motion
-controls.dampingFactor = 0.05;
-controls.autoRotate = false;
+const cameraOffset = new THREE.Vector3(
+  128.93910304616537,
+  86.4682792679389,
+  165.4058143507201,
+);
+camera.zoom = 1.5;
+camera.updateProjectionMatrix();
+
+// const controls = new OrbitControls(camera, canvas);
+// controls.update();
+// controls.enableDamping = true; // smooth motion
+// controls.dampingFactor = 0.05;
+// controls.autoRotate = false;
 
 function onResize() {
   sizes.width = window.innerWidth;
@@ -315,7 +319,7 @@ function onKeyDown(e) {
       playerVelocity.x += MOVE_SPEED;
       targetRotation = Math.PI / 2;
       break;
-    case "space":
+    case " ":
       if (playerOnGround) {
         playerVelocity.y = JUMP_HEIGHT;
       }
@@ -335,6 +339,21 @@ window.addEventListener("keydown", onKeyDown);
 
 function animate() {
   updatePlayer();
+
+  if (character.instance) {
+    const targetCameraPosition = new THREE.Vector3(
+      character.instance.position.x + cameraOffset.x,
+      cameraOffset.y,
+      character.instance.position.z + cameraOffset.z,
+    );
+    camera.position.copy(targetCameraPosition);
+    camera.lookAt(
+      character.instance.position.x,
+      camera.position.y - 86.4682792679389,
+      character.instance.position.z,
+    );
+  }
+
   raycaster.setFromCamera(pointer, camera);
   const intersects = raycaster.intersectObjects(intersectObjects, true);
 
