@@ -424,6 +424,7 @@ const mobileControls = {
   left: document.querySelector(".mobile-control.left-arrow"),
   right: document.querySelector(".mobile-control.right-arrow"),
   down: document.querySelector(".mobile-control.down-arrow"),
+  reset: document.querySelector(".mobile-control.reset-button"),
 };
 
 const pressedButtons = {
@@ -431,6 +432,7 @@ const pressedButtons = {
   down: false,
   left: false,
   right: false,
+  reset: false,
 };
 
 Object.entries(mobileControls).forEach(([direction, element]) => {
@@ -485,6 +487,10 @@ function applyMobileInput() {
     playerVelocity.x = MOVE_SPEED;
     targetRotation = Math.PI / 2;
     moved = true;
+  }
+  if (pressedButtons.reset) {
+    respawnPlayer();
+    return;
   }
 
   if (moved) {

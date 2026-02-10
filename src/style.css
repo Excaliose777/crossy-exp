@@ -106,6 +106,18 @@
   transform: translate(-50%, 32px) rotate(180deg);
 }
 
+.reset-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.reset-button h1 {
+  font-size: 40px;
+  margin: 0;
+}
+
 /* INFO BUTTON */
 .info-button {
   position: relative;
